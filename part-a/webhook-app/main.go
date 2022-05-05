@@ -1,21 +1,13 @@
 package main
 
-import(
-	"fmt"
-	"log"
-	"net/http"
+import (
+	"os"
 )
 
-func homePage(w http.ResponseWriter, r *http.Request){
-    fmt.Fprintf(w, "Welcome to the HomePage!")
-    fmt.Println("Endpoint Hit: homePage")
-}
-
-func handleRequests() {
-    http.HandleFunc("/", homePage)
-    log.Fatal(http.ListenAndServe(":10000", nil))
-}
+var rcURL = os.Getenv("RC_URL")
 
 func main() {
-    handleRequests()
+	a := App{}
+	a.Initialize(rcURL)
+	a.Run(":8000")
 }
