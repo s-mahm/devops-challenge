@@ -1,0 +1,106 @@
+---
+- name: Add Dockers official GPG key
+  become: true
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+  tags:
+    - docker
+    - dev
+
+- name: Verify that we have the key with the fingerprint
+  become: true
+  apt_key:
+    id: 0EBFCD88
+    state: present
+  tags:
+    - docker
+    - dev
+
+- name: Set up the stable repository
+  become: true
+  apt_repository:
+    repo: >-
+      deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+    state: present
+    update_cache: true
+  tags:
+    - docker
+    - dev
+
+- name: Install docker
+  become: true
+  apt:
+    pkg:
+      - docker
+      - docker.io
+      - docker-registry
+    state: latest
+    update_cache: true
+  tags:
+    - docker
+    - dev
+
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    group: docker
+
+- name: Remove swapfile from /etc/fstab
+  mount:
+    name: "{{ item }}"
+    fstype: swap
+    state: absent
+  with_items:
+    - swap
+    - none
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Add an apt signing key for Kubernetes
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Adding apt repository for Kubernetes
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+    filename: kubernetes.list
+
+- name: Install Kubernetes binaries
+  apt:
+    name: "{{ packages }}"
+    state: present
+    update_cache: true
+  vars:
+    packages:
+      - kubelet
+      - kubeadm
+      - kubectl
+
+- name: Create Kubernetes config
+  file:
+    path: /etc/default/kubelet
+    state: touch
+
+- name: Configure node ip
+  lineinfile:
+    path: /etc/default/kubelet
+    line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+
+- name: Restart kubelet
+  service:
+    name: kubelet
+    daemon_reload: true
+    state: restarted
+
+- name: Initialize the Kubernetes cluster using kubeadm
+  command: >-
+    kubeadm init
+    --apiserver-advertise-address="{{ node_ip }}"
+    --apiserver-cert-extra-sans="{{ node_ip }}"
+    --node-name master
+    --pod-network-cidr=192.168.0.0/16
