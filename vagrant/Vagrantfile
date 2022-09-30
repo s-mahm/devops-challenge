@@ -30,7 +30,7 @@ clusters = [
 ]
 
 Vagrant.configure(vagrantfile_api_version) do |config|
-  config.vm.box = 'debian/buster64'
+  config.vm.box = 'debian/bullseye64'
   config.vm.box_check_update = true
   config.ssh.insert_key = false
   clusters.each_with_index do |cluster, index|
@@ -39,6 +39,8 @@ Vagrant.configure(vagrantfile_api_version) do |config|
       cluster_config.vm.provider 'virtualbox' do |vbox|
         vbox.memory = cluster[:memory]
         vbox.cpus = cluster[:cpus]
+        vbox.customize ['modifyvm', :id, '--uartmode1', 'file',
+                        File.join(Dir.pwd, 'logs/debian-bullseyes-11-cloudimg-console.log')]
       end
       cluster_config.vm.network 'private_network', ip: cluster[:ip]
       if index == clusters.size - 1
