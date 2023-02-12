@@ -1,0 +1,24 @@
+---
+all:
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_user: vagrant
+    ansible_ssh_private_key_file: >-
+      /home/qadir/workstation/architecture/virtualmachines/vagrant/insecure_private_key
+    ansible_ssh_port: 22
+  hosts:
+  children:
+    master:
+      hosts:
+        192.168.60.10:
+    workers:
+      children:
+        nfs:
+          hosts:
+            192.168.60.11:
+        gitlab:
+          hosts:
+            192.168.60.12:
+        webapp:
+          hosts:
+            192.168.60.13:

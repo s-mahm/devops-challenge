@@ -1,0 +1,10 @@
+{
+    "auths": {
+        "https://registry.gitlab.com":{
+            "username":"smahm",
+            "password":"glpat-6vZ9VCubyqbCYyzZkHpz",
+            "email":"soh.mahmood@tutanota.com",
+            "auth":"c21haG06Z2xwYXQtNnZaOVZDdWJ5cWJDWXl6WmtIcHo="
+    	}
+    }
+}

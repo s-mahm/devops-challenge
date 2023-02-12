@@ -1,0 +1,82 @@
+---
+- name: Add Dockers official GPG key
+  become: true
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+  tags:
+    - docker
+    - dev
+
+- name: Verify that we have the key with the fingerprint
+  become: true
+  apt_key:
+    id: 0EBFCD88
+    state: present
+  tags:
+    - docker
+    - dev
+
+- name: Set up the stable repository
+  become: true
+  apt_repository:
+    repo: >-
+      deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+    state: present
+    update_cache: true
+  tags:
+    - docker
+    - dev
+
+- name: Install docker
+  become: true
+  apt:
+    pkg:
+      - docker
+      - docker.io
+      - docker-registry
+    state: latest
+    update_cache: true
+  tags:
+    - docker
+    - dev
+
+- name: Create docker group
+  become: true
+  group:
+    name: docker
+    state: present
+  tags:
+    - docker
+    - dev
+
+- name: Add USER to docker group
+  become: true
+  user:
+    name: "{{ USER }}"
+    groups: docker
+    append: true
+  tags:
+    - docker
+    - dev
+
+- name: Install docker-compose
+  become: true
+  get_url:
+    url: >-
+      https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x'
+  tags:
+    - docker
+    - dev
+
+- name: Change file ownership, group and permissions
+  become: true
+  file:
+    path: /usr/local/bin/docker-compose
+    owner: "{{ USER }}"
+    group: "{{ USER }}"
+  tags:
+    - docker
+    - dev

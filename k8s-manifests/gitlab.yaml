@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-service
+  labels:
+    app: gitlab
+spec:
+  selector:
+    app: gitlab
+    tier: frontend
+  type: NodePort
+  ports:
+    - name: gitlab-ui
+      port: 80
+      protocol: TCP
+      targetPort: 30080
+      nodePort: 30080
+    - name: gitlab-ssh
+      port: 22
+      protocol: TCP
+      targetPort: 22
+      nodePort: 30022
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-deployment
+  labels:
+    app: gitlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: gitlab
+        tier: frontend
+    spec:
+      containers:
+        - image: gitlab/gitlab-ce
+          name: gitlab
+          env:
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                external_url 'http://localhost:80'
+            - name: GITLAB_SKIP_UNMIGRATED_DATA_CHECK
+              value: “true”
+          ports:
+            - containerPort: 80
+              name: gitlab
+          volumeMounts:
+            - name: gitlab
+              mountPath: /var/opt/gitlab
+              subPath: gitlab_data
+            - name: gitlab
+              mountPath: /etc/gitlab
+              subPath: gitlab_config
+            - name: gitlab
+              mountPath: /var/log/gitlab
+              subPath: gitlab_logs
+      volumes:
+        - name: gitlab-volume
+          persistentVolumeClaim:
+            claimName: gitlab-claim
+      nodeSelector:
+        kubernetes.io/hostname: gitlab

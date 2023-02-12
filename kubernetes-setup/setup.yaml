@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - common
+
+- hosts: master
+  become: true
+  roles:
+    - master
+
+- hosts: workers
+  become: true
+  roles:
+    - worker
+
+- hosts: nfs
+  become: true
+  tasks:
+    - name: Install nfs-server
+      apt:
+        name: nfs-server
+        state: present
+    - name: Add gitlab worker to nfs config
+      lineinfile:
+        line: "/data 192.168.60.12(rw,no_subtree_check,no_root_squash)"
+        path: /etc/exports
+        state: present
+        create: true
+    - name: Add webapp worker to nfs config
+      lineinfile:
+        line: "/data 192.168.60.13(rw,no_subtree_check,no_root_squash)"
+        path: /etc/exports
+        state: present
+        create: true
